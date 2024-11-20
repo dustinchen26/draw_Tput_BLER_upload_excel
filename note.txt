@@ -1,0 +1,238 @@
+修改底下html，改成網頁輸出成表格和下載excel，
+輸出五個column, 
+column 1 time
+column 2 DL Tpt
+column 3 DL-BLER 
+column 4 UL Tpt
+column 5 UL-BLER
+自動下載excel，不用下載按鈕，bler用百分比取到小數點第一位表示
+只要下載一個excel，而且數值跟網頁顯示一樣，並且網頁的表格寬度只要跟文字一樣寬就好，讓寬度最窄
+excel colunm 1自動顯示yyyy/m/d hh:mm:ss
+
+<!--
+  Copyright © [2023] [Dustin_Chen]. All rights reserved.
+  Author: Dustin_Chen
+  Email:  Dustin_Chen@compal.com or chuhpsdustin@gmail.com
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload and draw total DL-BLER, UL-BLER, DL Tput, UL Tpt</title>
+    <!-- Include Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.2;
+            font-size: 14px;
+        }
+
+        .upload-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .upload-btn {
+            margin-right: 10px;
+        }
+
+        .progress-label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Upload and draw total DL-BLER, UL-BLER, DL Tput, UL Tpt</h2>
+
+    <p style="margin: 0;">Author: Dustin_Chen, email: <a href="mailto:Dustin_Chen@compal.com"
+            style="line-height: 1;">Dustin_Chen@compal.com</a> or <a href="mailto:chuhpsdustin@gmail.com"
+            style="line-height: 1;">chuhpsdustin@gmail.com</a></p>
+    <ul>
+        <li><strong>Please upload the du_stats_XXX.txt below, then it will draw the total DL-BLER, UL-BLER, DL Tput, UL
+                Tpt</strong>
+            <ul>
+                <li>total DL-BLER = DL-RETX /( DL-NEWTX + DL-RETX)</li>
+                <li>total UL-BLER = UL-RETX /( UL-NEWTX + UL-RETX)</li>
+                <li>total EGTP DL Tpt </li>
+                <li>total UL Tpt</li>
+                <div class="upload-container">
+                    <input type="file" id="fileInput" accept=".txt" class="upload-btn" onchange="uploadAndParse(this)">
+                    <div class="progress-label" id="progressLabel">0%</div>
+                    <progress id="progress" value="0" max="100"></progress>
+                </div>
+                <div id="plots"></div>
+            </ul>
+        </li>
+    </ul>
+
+
+    <script>
+        function uploadAndParse(input) {
+            var file = input.files[0];
+            var progress = document.getElementById('progress');
+            var progressLabel = document.getElementById('progressLabel');
+            var plots = document.getElementById('plots');
+
+            var reader = new FileReader();
+            var CHUNK_SIZE = 455 * 1024 * 1024; // 455MB chunk size
+            var start = 0;
+            var plotIndex = 1;
+
+            reader.onprogress = function (event) {
+                if (event.lengthComputable) {
+                    var percentLoaded = Math.round((start + event.loaded) / file.size * 100);
+                    progress.value = percentLoaded;
+                    progressLabel.textContent = percentLoaded + '%';
+                }
+            };
+
+            reader.onload = function (event) {
+                var inputData = event.target.result.trim().split('\n');
+
+                // Parsing logic...
+                var time = [];
+                var dlBler = [];
+                var ulBler = [];
+                var dlTpt = [];
+                var ulTpt = [];
+
+                // Parse input data
+                for (var i = 0; i < inputData.length; i++) {
+                    var line = inputData[i].trim();
+                    // Assuming time is available in the same line
+                    if (line.includes("GNB DU Statistics") && line.split(" ").length > 4) {
+                        var timeParts = line.split(" ").slice(5, 9).join(" "); // 提取第5到第9个单词，即时间部分
+                        time.push(timeParts);
+                    }
+                    if (line.startsWith("CELL-ID   CELL-DL-BANDWIDTH")) {
+                        var dlParts = inputData[i + 1].trim().split(/\s+/);
+                        var dlNewTx = parseFloat(dlParts[10]);
+                        var dlReTx = parseFloat(dlParts[11]);
+                        var bler = dlReTx / (dlNewTx + dlReTx);
+                        dlBler.push(bler);
+                    } else if (line.startsWith("CELL-ID   AVG-UL-PRB")) {
+                        var ulParts = inputData[i + 1].trim().split(/\s+/);
+                        var ulNewTx = parseFloat(ulParts[8]);
+                        var ulReTx = parseFloat(ulParts[9]);
+                        var bler = ulReTx / (ulNewTx + ulReTx);
+                        ulBler.push(bler);
+                    } else if (line.startsWith("EGTP DL Tpt")) {
+                        var dlTptValue = parseFloat(line.split(":")[1]);
+                        dlTpt.push(dlTptValue);
+                        var ulTptValue = parseFloat(line.split("UL Tpt")[1]);
+                        ulTpt.push(ulTptValue);
+                    }
+                }
+
+                // Plot the data
+                var trace1 = {
+                    x: time,
+                    y: dlBler,
+                    mode: 'lines+markers',
+                    name: 'DL-BLER',
+                    yaxis: 'y1', // Use the left y-axis
+                    line: {
+                        color: 'blue' // Change DL-BLER line color to blue
+                    }
+                };
+
+                var trace2 = {
+                    x: time,
+                    y: ulBler,
+                    mode: 'lines+markers',
+                    name: 'UL-BLER',
+                    yaxis: 'y1', // Use the left y-axis
+                    line: {
+                        color: 'green' // Change UL-BLER line color to green
+                    }
+                };
+
+                var trace3 = {
+                    x: time,
+                    y: dlTpt,
+                    mode: 'lines+markers',
+                    name: 'DL Tpt',
+                    yaxis: 'y2', // Use the right y-axis
+                    line: {
+                        color: 'orange' // Change DL Tpt line color to orange
+                    }
+                };
+
+                var trace4 = {
+                    x: time,
+                    y: ulTpt,
+                    mode: 'lines+markers',
+                    name: 'UL Tpt',
+                    yaxis: 'y2', // Use the right y-axis
+                    line: {
+                        color: 'red' // Change UL Tpt line color to red
+                    }
+                };
+
+                var data = [trace1, trace2, trace3, trace4];
+
+                var layout = {
+                    title: 'total DL-BLER, UL-BLER, DL Tput, UL Tpt Chart ' + plotIndex,
+                    xaxis: {
+                        title: 'GNB DU Statistics Time',
+                        tickangle: -30, // Rotate the x-axis labels by 45 degrees
+                        automargin: true // Automatically adjust the margin to prevent label clipping
+                    },
+                    yaxis: {
+                        title: 'BLER', // Label for the left y-axis
+                        side: 'left', // Position the left y-axis on the left side
+                        range: [0, Math.max(...dlBler, ...ulBler) * 1.2] // Adjust the range of left y-axis
+                    },
+                    yaxis2: {
+                        title: 'Tpt', // Label for the right y-axis
+                        side: 'right', // Position the right y-axis on the right side
+                        overlaying: 'y', // Overlay the right y-axis on the left y-axis
+                        range: [0, Math.max(...dlTpt, ...ulTpt) * 1.2] // Adjust the range of right y-axis
+                    },
+                    width: 1400, // Specify the width of the plot canvas
+                    height: 600 // Specify the height of the plot canvas
+                };
+
+                // Dynamically set x-axis tick format based on data length
+                if (time.length > 30) {
+                    layout.xaxis.tickmode = 'auto'; // Use auto tick mode for x-axis
+                    layout.xaxis.nticks = 30; // Limit the number of ticks to 10
+                } else {
+                    layout.xaxis.tickmode = 'array'; // Use array tick mode for x-axis
+                    layout.xaxis.tickvals = time; // Set tick values to time array
+                    layout.xaxis.ticktext = time; // Set tick text to time array
+                }
+
+                var plotDiv = document.createElement('div');
+                plotDiv.id = 'plot' + plotIndex;
+                plots.appendChild(plotDiv);
+
+                Plotly.newPlot('plot' + plotIndex, data, layout);
+
+                plotIndex++;
+
+                // Read the next chunk
+                if (start < file.size) {
+                    var nextSlice = file.slice(start, start + CHUNK_SIZE);
+                    reader.readAsText(nextSlice);
+                    start += CHUNK_SIZE;
+                } else {
+                    progress.value = 100;
+                    progressLabel.textContent = '100%';
+                }
+            };
+
+            // Read the first chunk
+            var slice = file.slice(start, start + CHUNK_SIZE);
+            reader.readAsText(slice);
+            start += CHUNK_SIZE;
+        }
+    </script>
+</body>
+
+</html>
