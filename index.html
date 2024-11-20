@@ -1,10 +1,16 @@
+<!--
+  Copyright © [2023] [Dustin_Chen]. All rights reserved.
+  Author: Dustin_Chen
+  Email:  Dustin_Chen@compal.com or chuhpsdustin@gmail.com
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload and draw total DL-BLER, UL-BLER, DL Tpt, UL Tpt</title>
+    <title>Tput_BLER_upload_excel</title>
     <!-- Include Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <!-- Include XLSX.js for Excel export functionality -->
@@ -52,7 +58,7 @@
 </head>
 
 <body>
-    <h2>Upload and draw total DL-BLER, UL-BLER, DL Tpt, UL Tpt</h2>
+    <h2>Tput_BLER_upload_excel</h2>
 
     <p style="margin: 0;">Author: Dustin_Chen, email: <a href="mailto:Dustin_Chen@compal.com"
             style="line-height: 1;">Dustin_Chen@compal.com</a> or <a href="mailto:chuhpsdustin@gmail.com"
@@ -62,6 +68,11 @@
         <li><strong>Please upload the du_stats_XXX.txt below, then it will draw the total DL-BLER, UL-BLER, DL Tpt, UL
                 Tpt</strong>
             <ul>
+                <li>total EGTP DL Tpt </li>
+                <li>total DL-BLER = DL-RETX /( DL-NEWTX + DL-RETX)</li>
+                <li>total UL Tpt</li>				
+                <li>total UL-BLER = UL-RETX /( UL-NEWTX + UL-RETX)</li>
+
                 <div class="upload-container">
                     <input type="file" id="fileInput" accept=".txt" class="upload-btn" onchange="uploadAndParse(this)">
                     <div class="progress-label" id="progressLabel">0%</div>
