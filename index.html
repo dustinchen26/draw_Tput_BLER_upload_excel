@@ -96,7 +96,6 @@
             var reader = new FileReader();
             var CHUNK_SIZE = 455 * 1024 * 1024; // 455MB chunk size
             var start = 0;
-            var plotIndex = 1;
 
             var time = [];
             var dlBler = [];
@@ -107,6 +106,8 @@
             reader.onprogress = function (event) {
                 if (event.lengthComputable) {
                     var percentLoaded = Math.round((start + event.loaded) / file.size * 100);
+                    // Ensure that the percent never exceeds 100%
+                    percentLoaded = Math.min(percentLoaded, 100);
                     progress.value = percentLoaded;
                     progressLabel.textContent = percentLoaded + '%';
                 }
