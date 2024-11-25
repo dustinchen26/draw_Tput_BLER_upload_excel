@@ -97,8 +97,11 @@
     </ul>
 
     <script>
+        var uploadedFileName = ''; // Variable to store the uploaded file name
+
         function uploadAndParse(input) {
             var file = input.files[0];
+            uploadedFileName = file.name.split('.')[0]; // Extract the file name without extension
             var progress = document.getElementById('progress');
             var progressLabel = document.getElementById('progressLabel');
             var dataTable = document.getElementById('dataTable');
@@ -198,7 +201,7 @@
             var wb = XLSX.utils.table_to_book(table, {sheet: 'Data'});
             var wbout = XLSX.write(wb, {bookType: 'xlsx', type: 'binary'});
 
-            // Create a Blob and trigger download
+            // Create a Blob and trigger download with the new file name
             var buf = new ArrayBuffer(wbout.length);
             var view = new Uint8Array(buf);
             for (var i = 0; i < wbout.length; i++) view[i] = wbout.charCodeAt(i) & 0xff;
@@ -206,7 +209,7 @@
             var blob = new Blob([buf], {type: 'application/octet-stream'});
             var link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'data.xlsx';
+            link.download = uploadedFileName + '_excel.xlsx'; // Use the original file name with "_excel" appended
             link.click();
         }
     </script>
