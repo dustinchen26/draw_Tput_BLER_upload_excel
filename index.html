@@ -100,12 +100,18 @@
         var uploadedFileName = ''; // Variable to store the uploaded file name
 
         function uploadAndParse(input) {
-            var file = input.files[0];
-            uploadedFileName = file.name.split('.')[0]; // Extract the file name without extension
-            var progress = document.getElementById('progress');
-            var progressLabel = document.getElementById('progressLabel');
+            // Clear the table and reset progress bar when a new file is uploaded
             var dataTable = document.getElementById('dataTable');
             var tableBody = dataTable.querySelector('tbody');
+            tableBody.innerHTML = ''; // Clear previous data
+
+            var progress = document.getElementById('progress');
+            var progressLabel = document.getElementById('progressLabel');
+            progress.value = 0;
+            progressLabel.textContent = '0%';
+
+            var file = input.files[0];
+            uploadedFileName = file.name.split('.')[0]; // Extract the file name without extension
 
             var reader = new FileReader();
             var CHUNK_SIZE = 455 * 1024 * 1024; // 455MB chunk size
